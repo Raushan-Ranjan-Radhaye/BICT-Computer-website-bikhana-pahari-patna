@@ -1,22 +1,75 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { BATCH_TIMES, BRAND, COURSE_OPTIONS, FAQS } from "../data";
+import { toast } from "sonner";
+import { BRAND, COURSE_OPTIONS, FAQS } from "../data";
 import Icon from "./Icon";
 import Reveal from "./Reveal";
 
 const inputCls =
   "w-full rounded-xl border border-brand-200 bg-white px-4 py-3 text-sm text-ink-900 outline-none transition-all duration-300 placeholder:text-ink-500/60 focus:border-brand-400 focus:ring-4 focus:ring-brand-200/50 hover:border-brand-300";
 
+const initialForm = {
+  name: "",
+  phone: "",
+  course: COURSE_OPTIONS[0],
+};
+
 export default function Enquiry() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", course: COURSE_OPTIONS[0], duration: "3 Months", batchTime: BATCH_TIMES[2], batchDate: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState(initialForm);
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSent(true);
-    setForm({ name: "", phone: "", course: COURSE_OPTIONS[0], duration: "3 Months", batchTime: BATCH_TIMES[2], batchDate: "" });
+
+    if (submitting) return;
+
+    const name = form.name.trim();
+    const phone = form.phone.trim();
+    const digits = phone.replace(/\D/g, "");
+
+    if (name.length < 2) {
+      toast.error("Please enter your name.");
+      return;
+    }
+    if (digits.length < 10 || digits.length > 13) {
+      toast.error("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    setSubmitting(true);
+    const loadingToast = toast.loading("Sending your enquiry...");
+
+    try {
+      const res = await fetch("/api/enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // `website` is a honeypot field — it is never filled by real users.
+        body: JSON.stringify({ ...form, name, phone, website: "" }),
+      });
+
+      const data: { success?: boolean; message?: string } = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Unable to send your enquiry right now.");
+      }
+
+      toast.dismiss(loadingToast);
+      toast.success("Enquiry sent successfully!", {
+        description: "Our team will call you back shortly. Thank you for your interest.",
+      });
+      setSent(true);
+      setForm(initialForm);
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error(error instanceof Error ? error.message : "Something went wrong.", {
+        description: `You can also call us directly on ${BRAND.phoneRaw}.`,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -104,41 +157,13 @@ export default function Enquiry() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label htmlFor="duration" className="mb-1.5 block text-xs font-bold text-ink-700">
-                      Duration
-                    </label>
-                    <select id="duration" value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} className={inputCls}>
-                      {["3 Months", "6 Months", "12 Months", "Flexible / Discuss"].map((d) => (
-                        <option key={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="batchTime" className="mb-1.5 block text-xs font-bold text-ink-700">
-                      Batch Time
-                    </label>
-                    <select id="batchTime" value={form.batchTime} onChange={(e) => setForm({ ...form, batchTime: e.target.value })} className={inputCls}>
-                      {BATCH_TIMES.map((b) => (
-                        <option key={b}>{b}</option>
-                      ))}
-                    </select>
-                  </div>
                   <div className="sm:col-span-2">
-                    <label htmlFor="batchDate" className="mb-1.5 block text-xs font-bold text-ink-700">
-                      Preferred Batch Date
-                    </label>
-                    <input
-                      id="batchDate"
-                      type="date"
-                      value={form.batchDate}
-                      onChange={(e) => setForm({ ...form, batchDate: e.target.value })}
-                      className={inputCls}
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <button type="submit" className="btn btn-primary flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold sm:text-base">
-                      Submit Enquiry
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="btn btn-primary flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-70 sm:text-base"
+                    >
+                      {submitting ? "Sending..." : "Submit Enquiry"}
                       <Icon name="arrow" className="h-5 w-5" />
                     </button>
                   </div>

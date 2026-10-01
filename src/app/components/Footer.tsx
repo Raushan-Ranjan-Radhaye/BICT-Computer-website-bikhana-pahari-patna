@@ -16,13 +16,13 @@ export default function Footer() {
             {/* Brand */}
             <div className="lg:col-span-2">
               <div className="flex items-center gap-3">
-                <span className="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-md shadow-brand-200/60 transition-transform duration-500 hover:scale-105">
+                <span className="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-brand-200/70 bg-[#F2EEE2] shadow-md shadow-brand-200/60 transition-transform duration-500 hover:scale-105">
                   <Image
                     src={logo}
                     alt={`${BRAND.name} logo`}
                     width={56}
                     height={56}
-                    className="h-full w-full scale-[1.18] object-contain"
+                    className="h-full w-full object-contain"
                   />
                 </span>
                 <div>

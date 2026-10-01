@@ -66,14 +66,14 @@ export default function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         {/* Logo */}
         <a href="#home" className="group flex shrink-0 items-center gap-3" aria-label={BRAND.name}>
-          <span className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-md shadow-brand-200/60 transition-all duration-500 group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-brand-300/60 sm:h-14 sm:w-14">
+          <span className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-brand-200/70 bg-[#F2EEE2] shadow-md shadow-brand-200/60 transition-all duration-500 group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-brand-300/60 sm:h-14 sm:w-14">
             <Image
               src={logo}
               alt={`${BRAND.name} logo`}
               width={56}
               height={56}
               priority
-              className="h-full w-full scale-[1.18] object-contain"
+              className="h-full w-full object-contain"
             />
           </span>
           <span className="leading-tight">
@@ -135,33 +135,39 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile menu — horizontal scrollable links */}
+      {/* Mobile menu — vertical link list */}
       <div
         className={`overflow-hidden border-t border-brand-100 bg-white/95 backdrop-blur-xl transition-all duration-500 lg:hidden ${
-          open ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+          open ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
         <nav className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
-          {/* horizontal scrolling pills */}
-          <div className="-mx-4 flex snap-x snap-mandatory items-center gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-6 sm:px-6">
+          {/* vertical stacked links */}
+          <ul className="flex flex-col gap-1.5">
             {NAV_LINKS.map((link, i) => (
-              <a
+              <li
                 key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                style={{ transitionDelay: `${i * 45}ms` }}
-                className={`shrink-0 snap-start whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-all duration-300 active:scale-95 sm:text-sm ${
+                className={`transition-all duration-300 ${
                   open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
-                } ${
-                  active === link.href
-                    ? "border-transparent bg-gradient-to-r from-brand-600 to-brand-400 text-white shadow-md shadow-brand-300/50"
-                    : "border-brand-200 bg-white text-ink-700 hover:-translate-y-0.5 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700"
                 }`}
+                style={{ transitionDelay: `${i * 45}ms` }}
               >
-                {link.label}
-              </a>
+                <a
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={active === link.href ? "page" : undefined}
+                  className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-bold transition-all duration-300 active:scale-[0.98] ${
+                    active === link.href
+                      ? "border-transparent bg-gradient-to-r from-brand-600 to-brand-400 text-white shadow-md shadow-brand-300/50"
+                      : "border-brand-200 bg-white text-ink-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700"
+                  }`}
+                >
+                  {link.label}
+                  <Icon name="arrow" className="h-4 w-4 shrink-0 opacity-70" />
+                </a>
+              </li>
             ))}
-          </div>
+          </ul>
 
           {/* actions */}
           <div className="mt-2.5 grid grid-cols-2 gap-2">
