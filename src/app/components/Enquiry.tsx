@@ -89,8 +89,8 @@ export default function Enquiry() {
             Book Your <span className="text-gradient">Admission</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ink-500 sm:text-base">
-            Fill the enquiry form and our team will call you back with course fee, duration, batch time and batch date
-            details.
+            Fill in your name, mobile number and the course you are interested in. Our team will call you
+            back with course fee, duration, batch time and batch date details.
           </p>
         </Reveal>
 
