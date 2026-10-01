@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { BRAND, NAV_LINKS } from "../data";
 import Icon from "./Icon";
+import logo from "../assets/logo.png";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -14,9 +16,14 @@ export default function Footer() {
             {/* Brand */}
             <div className="lg:col-span-2">
               <div className="flex items-center gap-3">
-                <span className="relative grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-300/60 transition-transform duration-500 hover:rotate-12">
-                  <span className="absolute inset-0 animate-ring rounded-2xl border border-brand-400" />
-                  <Icon name="computer" className="h-6 w-6" />
+                <span className="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-md shadow-brand-200/60 transition-transform duration-500 hover:scale-105">
+                  <Image
+                    src={logo}
+                    alt={`${BRAND.name} logo`}
+                    width={56}
+                    height={56}
+                    className="h-full w-full scale-[1.18] object-contain"
+                  />
                 </span>
                 <div>
                   <p className="font-display text-lg font-extrabold tracking-tight text-ink-900">

@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { BRAND, NAV_LINKS } from "../data";
 import Icon from "./Icon";
+import logo from "../assets/logo.png";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
@@ -64,9 +66,15 @@ export default function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         {/* Logo */}
         <a href="#home" className="group flex shrink-0 items-center gap-3" aria-label={BRAND.name}>
-          <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-300/60 transition-transform duration-500 group-hover:rotate-[14deg] group-hover:scale-110">
-            <span className="absolute inset-0 animate-ring rounded-2xl border border-brand-400" />
-            <Icon name="computer" className="h-6 w-6" />
+          <span className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-md shadow-brand-200/60 transition-all duration-500 group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-brand-300/60 sm:h-14 sm:w-14">
+            <Image
+              src={logo}
+              alt={`${BRAND.name} logo`}
+              width={56}
+              height={56}
+              priority
+              className="h-full w-full scale-[1.18] object-contain"
+            />
           </span>
           <span className="leading-tight">
             <span className="block font-display text-[15px] font-extrabold tracking-tight text-ink-900 sm:text-lg">
@@ -127,40 +135,54 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — horizontal scrollable links */}
       <div
         className={`overflow-hidden border-t border-brand-100 bg-white/95 backdrop-blur-xl transition-all duration-500 lg:hidden ${
-          open ? "max-h-[26rem] opacity-100" : "max-h-0 opacity-0"
+          open ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <nav className="mx-auto grid max-w-7xl gap-1 px-4 py-4 sm:px-6">
-          {NAV_LINKS.map((link, i) => (
+        <nav className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+          {/* horizontal scrolling pills */}
+          <div className="-mx-4 flex snap-x snap-mandatory items-center gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-6 sm:px-6">
+            {NAV_LINKS.map((link, i) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                style={{ transitionDelay: `${i * 45}ms` }}
+                className={`shrink-0 snap-start whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-all duration-300 active:scale-95 sm:text-sm ${
+                  open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+                } ${
+                  active === link.href
+                    ? "border-transparent bg-gradient-to-r from-brand-600 to-brand-400 text-white shadow-md shadow-brand-300/50"
+                    : "border-brand-200 bg-white text-ink-700 hover:-translate-y-0.5 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700"
+                }`}
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+
+          {/* actions */}
+          <div className="mt-2.5 grid grid-cols-2 gap-2">
             <a
-              key={link.href}
-              href={link.href}
+              href={`tel:+91${BRAND.phoneRaw}`}
               onClick={() => setOpen(false)}
-              style={{ transitionDelay: `${i * 45}ms` }}
-              className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-300 ${
-                open ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"
-              } ${
-                active === link.href
-                  ? "bg-brand-50 text-brand-700"
-                  : "text-ink-700 hover:bg-brand-50 hover:text-brand-600"
-              }`}
+              className="btn btn-primary inline-flex items-center justify-center gap-2 rounded-full py-2.5 text-sm font-bold"
             >
-              {link.label}
-              <Icon name="arrow" className="h-4 w-4 opacity-60" />
+              <Icon name="phone" className="h-4 w-4" />
+              Call Now
             </a>
-          ))}
-          <a
-            href={`https://wa.me/${BRAND.whatsapp}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-400 px-4 py-3 text-sm font-semibold text-white"
-          >
-            <Icon name="whatsapp" className="h-4 w-4" />
-            Chat on WhatsApp
-          </a>
+            <a
+              href={`https://wa.me/${BRAND.whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ghost inline-flex items-center justify-center gap-2 rounded-full py-2.5 text-sm font-bold"
+            >
+              <Icon name="whatsapp" className="h-4 w-4" />
+              WhatsApp
+            </a>
+          </div>
         </nav>
       </div>
     </header>

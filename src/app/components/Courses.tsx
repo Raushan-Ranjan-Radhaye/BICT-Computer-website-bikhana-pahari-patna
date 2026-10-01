@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { COURSES } from "../courses";
+import { BRAND } from "../data";
 import Icon from "./Icon";
 import Reveal from "./Reveal";
 
@@ -123,7 +124,7 @@ export default function Courses() {
                       <Icon name="arrow" className="h-4 w-4" />
                     </a>
                     <a
-                      href={`tel:+91${"7070885367"}`}
+                      href={`tel:+91${BRAND.phoneRaw}`}
                       aria-label={`Call about ${course.code}`}
                       className="btn btn-ghost grid w-12 place-items-center rounded-xl"
                     >
