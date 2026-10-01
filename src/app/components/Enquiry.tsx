@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { BRAND, COURSE_OPTIONS, FAQS } from "../data";
+import { BRAND, FAQS } from "../data";
 import Icon from "./Icon";
 import Reveal from "./Reveal";
 
@@ -12,10 +12,10 @@ const inputCls =
 const initialForm = {
   name: "",
   phone: "",
-  course: COURSE_OPTIONS[0],
+  course: "",
 };
 
-export default function Enquiry() {
+export default function Enquiry(){
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -28,6 +28,7 @@ export default function Enquiry() {
 
     const name = form.name.trim();
     const phone = form.phone.trim();
+    const course = form.course.trim();
     const digits = phone.replace(/\D/g, "");
 
     if (name.length < 2) {
@@ -36,6 +37,10 @@ export default function Enquiry() {
     }
     if (digits.length < 10 || digits.length > 13) {
       toast.error("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (course.length < 2) {
+      toast.error("Please type the course you are interested in.");
       return;
     }
 
@@ -47,7 +52,7 @@ export default function Enquiry() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // `website` is a honeypot field — it is never filled by real users.
-        body: JSON.stringify({ ...form, name, phone, website: "" }),
+        body: JSON.stringify({ name, phone, course, website: "" }),
       });
 
       const data: { success?: boolean; message?: string } = await res.json().catch(() => ({}));
@@ -151,11 +156,17 @@ export default function Enquiry() {
                     <label htmlFor="course" className="mb-1.5 block text-xs font-bold text-ink-700">
                       Course *
                     </label>
-                    <select id="course" value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })} className={inputCls}>
-                      {COURSE_OPTIONS.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </select>
+                    <input
+                      id="course"
+                      type="text"
+                      required
+                      autoComplete="off"
+                      maxLength={120}
+                      value={form.course}
+                      onChange={(e) => setForm({ ...form, course: e.target.value })}
+                      placeholder="Type your course, e.g. ADCA, CCA, Tally Prime"
+                      className={inputCls}
+                    />
                   </div>
                   <div className="sm:col-span-2">
                     <button
