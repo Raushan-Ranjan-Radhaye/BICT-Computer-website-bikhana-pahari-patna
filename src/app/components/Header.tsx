@@ -84,8 +84,8 @@ export default function Header() {
           <span className="flex min-w-0 items-center gap-1.5">
             <Icon name="shield" className="h-3.5 w-3.5 shrink-0" />
             {/* Full ministry line needs ~360px; below `sm` it wraps and clips. */}
-            <span className="sm:hidden">{BRAND.approvalShort}</span>
-            <span className="hidden sm:inline">{BRAND.approval}</span>
+            <span className="whitespace-nowrap sm:hidden">{BRAND.approvalShort}</span>
+            <span className="hidden whitespace-nowrap sm:inline">{BRAND.approval}</span>
           </span>
           <span className="hidden h-3 w-px bg-white/40 sm:block" />
           <a
@@ -96,7 +96,9 @@ export default function Header() {
             Call: {BRAND.phoneRaw}
           </a>
           <span className="hidden h-3 w-px bg-white/40 sm:block" />
-          <span className="hidden sm:inline">{BRAND.tagline}</span>
+          {/* Tagline only once the strip is wide enough to hold all three
+              items on a single line — otherwise the strip grows to 3 rows. */}
+          <span className="hidden whitespace-nowrap lg:inline">{BRAND.tagline}</span>
         </div>
       </div>
 
