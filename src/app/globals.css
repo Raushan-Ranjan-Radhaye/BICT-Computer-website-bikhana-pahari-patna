@@ -114,9 +114,12 @@
   }
 }
 /* ---------- Base ---------- */
+/* --header-h is published by <Header> from a ResizeObserver, so anchor jumps
+   land exactly below the fixed bar whether the top strip is expanded or
+   collapsed and whatever the current breakpoint sizes the bar to. */
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 5rem;
+  scroll-padding-top: calc(var(--header-h, 5rem) + 1rem);
 }
 
 body {

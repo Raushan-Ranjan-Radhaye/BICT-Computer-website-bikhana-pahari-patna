@@ -174,7 +174,7 @@ export default function NotificationButton({ variant = "icon", className = "" }:
         disabled={busy || permission === "unsupported"}
         aria-label={isGranted ? "Notifications enabled" : "Enable notifications"}
         title={isGranted ? "Notifications are enabled" : "Enable notifications"}
-        className={`btn grid h-11 w-11 place-items-center rounded-xl border transition-all duration-300 disabled:cursor-not-allowed ${
+        className={`btn grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition-all duration-300 disabled:cursor-not-allowed sm:h-11 sm:w-11 ${
           isGranted
             ? "border-brand-400 bg-brand-50 text-brand-600"
             : "border-brand-200 bg-white text-brand-600 hover:border-brand-400 hover:bg-brand-50"

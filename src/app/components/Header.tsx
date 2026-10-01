@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BRAND, NAV_LINKS } from "../data";
 import Icon from "./Icon";
 import NotificationButton from "./NotificationButton";
@@ -11,6 +11,7 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("#home");
+  const barRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -35,9 +36,39 @@ export default function Header() {
     return () => io.disconnect();
   }, []);
 
+ 
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const publish = () =>
+      document.documentElement.style.setProperty("--header-h", `${el.offsetHeight}px`);
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  /* Close the sheet on Escape, when the viewport grows into the desktop nav,
+     and lock page scrolling behind the open sheet. */
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const mq = window.matchMedia("(min-width: 1280px)"); // matches the `xl` breakpoint
+    const onChange = () => mq.matches && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    mq.addEventListener("change", onChange);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      mq.removeEventListener("change", onChange);
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
+      ref={barRef}
+      className={`fixed inset-x-0 top-0 z-50 w-full transition-all duration-500 ${
         scrolled
           ? "bg-white/85 shadow-[0_10px_40px_-22px_rgba(225,29,86,0.55)] backdrop-blur-xl"
           : "bg-white/55 backdrop-blur-md"
@@ -46,17 +77,22 @@ export default function Header() {
       {/* top info strip */}
       <div
         className={`overflow-hidden bg-gradient-to-r from-brand-600 via-brand-500 to-purple-500 text-white transition-all duration-500 ${
-          scrolled ? "max-h-0 opacity-0" : "max-h-12 opacity-100"
+          scrolled ? "max-h-0 opacity-0" : "max-h-20 opacity-100"
         }`}
       >
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-6 gap-y-1 px-4 py-2 text-[11px] font-medium tracking-wide sm:text-xs">
-          <span className="flex items-center gap-1.5">
-            <Icon name="shield" className="h-3.5 w-3.5" />
-            {BRAND.approval}
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-x-6 gap-y-1 px-3 py-2 text-center text-[11px] font-medium tracking-wide sm:flex-row sm:px-6 sm:text-center sm:text-xs">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Icon name="shield" className="h-3.5 w-3.5 shrink-0" />
+            {/* Full ministry line needs ~360px; below `sm` it wraps and clips. */}
+            <span className="sm:hidden">{BRAND.approvalShort}</span>
+            <span className="hidden sm:inline">{BRAND.approval}</span>
           </span>
           <span className="hidden h-3 w-px bg-white/40 sm:block" />
-          <a href={`tel:+91${BRAND.phoneRaw}`} className="flex items-center gap-1.5 transition hover:text-brand-100">
-            <Icon name="phone" className="h-3.5 w-3.5" />
+          <a
+            href={`tel:+91${BRAND.phoneRaw}`}
+            className="flex shrink-0 items-center gap-1.5 whitespace-nowrap transition hover:text-brand-100"
+          >
+            <Icon name="phone" className="h-3.5 w-3.5 shrink-0" />
             Call: {BRAND.phoneRaw}
           </a>
           <span className="hidden h-3 w-px bg-white/40 sm:block" />
@@ -64,10 +100,10 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
         {/* Logo */}
-        <a href="#home" className="group flex shrink-0 items-center gap-3" aria-label={BRAND.name}>
-          <span className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-brand-200/70 bg-[#F2EEE2] shadow-md shadow-brand-200/60 transition-all duration-500 group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-brand-300/60 sm:h-14 sm:w-14">
+        <a href="#home" className="group flex min-w-0 shrink items-center gap-2 sm:gap-3" aria-label={BRAND.name}>
+          <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl border border-brand-200/70 bg-[#F2EEE2] shadow-md shadow-brand-200/60 transition-all duration-500 group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-brand-300/60 sm:h-12 sm:w-12 sm:rounded-2xl md:h-14 md:w-14">
             <Image
               src={logo}
               alt={`${BRAND.name} logo`}
@@ -77,23 +113,26 @@ export default function Header() {
               className="h-full w-full object-contain"
             />
           </span>
-          <span className="leading-tight">
-            <span className="block font-display text-[15px] font-extrabold tracking-tight text-ink-900 sm:text-lg">
+          {/* min-w-0 + truncate: if a screen is too tight for the wordmark it
+              shrinks, it never pushes the menu button off-screen. */}
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate whitespace-nowrap font-display text-[13px] font-extrabold tracking-tight text-ink-900 sm:text-lg">
               BICT <span className="text-brand-600">Computer</span>
             </span>
-            <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-500 sm:text-[11px]">
+            <span className="block truncate text-[9px] font-semibold uppercase tracking-[0.15em] text-brand-500 sm:text-[11px] sm:tracking-[0.2em]">
               Education • Patna
             </span>
           </span>
         </a>
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 lg:flex">
+        {/* Desktop nav — starts at `xl`; the six links plus three action
+            buttons need ~1044px, so at `lg` (1024px) they used to overflow. */}
+        <nav className="hidden shrink-0 items-center gap-1 xl:flex">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className={`nav-link relative rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors duration-300 ${
+              className={`nav-link relative whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors duration-300 ${
                 active === link.href
                   ? "bg-brand-50 text-brand-700"
                   : "text-ink-700 hover:bg-brand-50 hover:text-brand-600"
@@ -104,7 +143,8 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        {/* shrink-0 keeps the bell + menu button visible at every width. */}
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <a
             href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(
               `Hello ${BRAND.name}, I want to know about your courses.`,
@@ -118,11 +158,12 @@ export default function Header() {
           </a>
           <a
             href="#enquiry"
-            className="btn btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold sm:px-5"
+            aria-label="Enquire now"
+            className="btn btn-primary inline-flex h-10 w-10 items-center justify-center gap-2 rounded-full sm:h-auto sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm sm:font-semibold"
           >
-            <span className="hidden sm:inline">Enquire Now</span>
-            <span className="sm:hidden">Enquire</span>
-            <Icon name="arrow" className="h-4 w-4" />
+            <span className="hidden whitespace-nowrap sm:inline">Enquire Now</span>
+            {/* Icon-only below `sm`: the label does not fit next to the logo. */}
+            <Icon name="arrow" className="h-4 w-4 shrink-0" />
           </a>
           {/* Notification opt-in bell — one tap allows alerts on this device */}
           <NotificationButton variant="icon" />
@@ -130,8 +171,9 @@ export default function Header() {
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
-            aria-label="Toggle menu"
-            className="grid h-11 w-11 place-items-center rounded-xl border border-brand-200 bg-white text-brand-600 transition-all duration-300 hover:border-brand-400 hover:bg-brand-50 lg:hidden"
+            aria-controls="mobile-menu"
+            aria-label={open ? "Close menu" : "Open menu"}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-brand-200 bg-white text-brand-600 transition-all duration-300 hover:border-brand-400 hover:bg-brand-50 active:scale-95 sm:h-11 sm:w-11 xl:hidden"
           >
             <Icon name={open ? "close" : "menu"} className="h-6 w-6" />
           </button>
@@ -140,11 +182,15 @@ export default function Header() {
 
       {/* Mobile menu — vertical link list */}
       <div
-        className={`overflow-hidden border-t border-brand-100 bg-white/95 backdrop-blur-xl transition-all duration-500 lg:hidden ${
-          open ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+        id="mobile-menu"
+        inert={!open}
+        className={`overscroll-contain border-t border-brand-100 bg-white/95 backdrop-blur-xl transition-all duration-500 xl:hidden ${
+          open
+            ? "max-h-[calc(100dvh-4rem)] opacity-100 overflow-y-auto"
+            : "max-h-0 overflow-hidden opacity-0"
         }`}
       >
-        <nav className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+        <nav className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
           {/* vertical stacked links */}
           <ul className="flex flex-col gap-1.5">
             {NAV_LINKS.map((link, i) => (
@@ -172,14 +218,25 @@ export default function Header() {
             ))}
           </ul>
 
-          {/* actions */}
-          <div className="mt-2.5 grid grid-cols-2 gap-2">
+          {/* actions — full-width enquiry CTA (the header button is icon-only
+              on phones), then call / WhatsApp side by side */}
+          <div className="mt-3 flex flex-col gap-2">
+            <a
+              href="#enquiry"
+              onClick={() => setOpen(false)}
+              className="btn btn-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold"
+            >
+              Enquire Now
+              <Icon name="arrow" className="h-4 w-4 shrink-0" />
+            </a>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
             <a
               href={`tel:+91${BRAND.phoneRaw}`}
               onClick={() => setOpen(false)}
               className="btn btn-primary inline-flex items-center justify-center gap-2 rounded-full py-2.5 text-sm font-bold"
             >
-              <Icon name="phone" className="h-4 w-4" />
+              <Icon name="phone" className="h-4 w-4 shrink-0" />
               Call Now
             </a>
             <a

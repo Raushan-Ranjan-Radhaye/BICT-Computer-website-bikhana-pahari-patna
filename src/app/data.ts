@@ -16,6 +16,8 @@ export const BRAND = {
   tagline: "Join us today for better tomorrow",
   regNo: "Regd. No. - 054879",
   approval: "Approved by Ministry of Corporate Affairs, Govt. of India",
+  /* Short form used on very narrow screens where the strip wraps badly. */
+  approvalShort: "Govt. of India Approved",
   sub: "A Complete IT - Professional Training Institute",
   phone: "+91 70708 85367",
   phoneRaw: "7070885367",
