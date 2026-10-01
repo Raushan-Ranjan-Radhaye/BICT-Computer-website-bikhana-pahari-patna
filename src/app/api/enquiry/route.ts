@@ -1,7 +1,24 @@
-import { sendEnquiryEmail, type EnquiryPayload } from "@/app/lib/mailer";
+import { sendEnquiryEmail, describeMailError, type EnquiryPayload } from "@/app/lib/mailer";
 import { BRAND } from "@/app/data";
 
 export const runtime = "nodejs";
+
+/* Very small in-memory throttle so one visitor cannot flood the inbox. */
+const WINDOW_MS = 60_000;
+const MAX_PER_WINDOW = 5;
+const hits = new Map<string, number[]>();
+
+function rateLimited(ip: string) {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+  recent.push(now);
+  hits.set(ip, recent);
+
+  // Keep the map from growing forever.
+  if (hits.size > 5000) hits.clear();
+
+  return recent.length > MAX_PER_WINDOW;
+}
 
 /** Simple server-side sanity checks so junk never reaches the inbox. */
 function validate(body: Partial<EnquiryPayload> & { website?: string }) {
@@ -11,21 +28,40 @@ function validate(body: Partial<EnquiryPayload> & { website?: string }) {
   if (!body.phone || body.phone.trim().replace(/\D/g, "").length < 10) {
     errors.push("Please enter a valid phone number.");
   }
-  if (!body.course) errors.push("Please select a course.");
-
-  // Block obviously fake values (honeypot field left filled by a bot).
-  if (body.website) errors.push("Invalid submission.");
+  if (!body.course || body.course.trim().length < 2) {
+    errors.push("Please select a course.");
+  }
 
   return errors;
 }
 
 export async function POST(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "local";
+
+  if (rateLimited(ip)) {
+    return Response.json(
+      {
+        success: false,
+        message: `Too many requests. Please call us on ${BRAND.phoneRaw}.`,
+      },
+      { status: 429 },
+    );
+  }
+
   let body: Partial<EnquiryPayload> & { website?: string };
 
   try {
     body = await request.json();
   } catch {
     return Response.json({ success: false, message: "Invalid request body." }, { status: 400 });
+  }
+
+  // Honeypot filled => bot. Pretend success so it learns nothing.
+  if (body.website) {
+    return Response.json({ success: true, message: "Enquiry sent successfully." });
   }
 
   const errors = validate(body);
@@ -40,25 +76,26 @@ export async function POST(request: Request) {
   };
 
   try {
-    const { to } = await sendEnquiryEmail(data);
+    await sendEnquiryEmail(data);
     return Response.json({
       success: true,
       message: "Enquiry sent successfully.",
-      to,
     });
   } catch (error) {
-    console.error("[enquiry] Failed to send email:", error);
+    const reason = describeMailError(error);
+    console.error(`[enquiry] Failed to send email: ${reason}`);
+
+    const notConfigured = reason.includes("not configured");
     return Response.json(
       {
         success: false,
-        message:
-          error instanceof Error && error.message.includes("not configured")
-            ? "Email service is not configured yet. Please call us directly."
-            : "Something went wrong while sending your enquiry. Please call us on " +
-              BRAND.phoneRaw +
-              ".",
+        message: notConfigured
+          ? "Email service is not configured yet. Please call us directly."
+          : "Something went wrong while sending your enquiry. Please call us on " +
+            BRAND.phoneRaw +
+            ".",
       },
-      { status: 500 },
+      { status: notConfigured ? 503 : 500 },
     );
   }
 }

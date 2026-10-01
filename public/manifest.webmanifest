@@ -1,0 +1,51 @@
+{
+  "name": "BICT Computer Education — CCA, CFA, DCA, DFA, DTP, ADCA Courses in Patna",
+  "short_name": "BICT Computer",
+  "description": "Join us today for better tomorrow. Computer courses in Patna with one person one computer, daily doubt classes and 100% job assistance.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#e11f56",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "categories": ["education", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Courses",
+      "short_name": "Courses",
+      "url": "/#courses"
+    },
+    {
+      "name": "Enquire Now",
+      "short_name": "Enquire",
+      "url": "/#enquiry"
+    },
+    {
+      "name": "Call Us",
+      "short_name": "Call",
+      "url": "/#contact"
+    }
+  ]
+}

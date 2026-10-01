@@ -1,5 +1,6 @@
 import { BRAND, STATS } from "../data";
 import Icon from "./Icon";
+import NotificationButton from "./NotificationButton";
 
 const TICKER = [
   "CCA",
@@ -66,6 +67,8 @@ export default function Hero() {
                 <Icon name="phone" className="h-5 w-5" />
                 {BRAND.phoneRaw}
               </a>
+              {/* One tap lets this device (phone, tablet or desktop browser) show alerts */}
+              <NotificationButton variant="full" className="px-5 py-3.5" />
             </div>
 
             <div className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-ink-500 lg:justify-start sm:text-sm">

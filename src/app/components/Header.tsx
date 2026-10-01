@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { BRAND, NAV_LINKS } from "../data";
 import Icon from "./Icon";
+import NotificationButton from "./NotificationButton";
 import logo from "../assets/logo.png";
 
 export default function Header() {
@@ -123,6 +124,8 @@ export default function Header() {
             <span className="sm:hidden">Enquire</span>
             <Icon name="arrow" className="h-4 w-4" />
           </a>
+          {/* Notification opt-in bell — one tap allows alerts on this device */}
+          <NotificationButton variant="icon" />
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -189,6 +192,9 @@ export default function Header() {
               WhatsApp
             </a>
           </div>
+
+          {/* enable notifications on this phone / browser */}
+          <NotificationButton variant="full" className="mt-2.5 w-full !py-3" />
         </nav>
       </div>
     </header>

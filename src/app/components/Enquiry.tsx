@@ -4,7 +4,9 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { BRAND, FAQS } from "../data";
 import Icon from "./Icon";
+import NotificationButton from "./NotificationButton";
 import Reveal from "./Reveal";
+import { showNotification } from "@/app/lib/notifications";
 
 const inputCls =
   "w-full rounded-xl border border-brand-200 bg-white px-4 py-3 text-sm text-ink-900 outline-none transition-all duration-300 placeholder:text-ink-500/60 focus:border-brand-400 focus:ring-4 focus:ring-brand-200/50 hover:border-brand-300";
@@ -65,6 +67,12 @@ export default function Enquiry(){
       toast.success("Enquiry sent successfully!", {
         description: "Our team will call you back shortly. Thank you for your interest.",
       });
+      // If the visitor allowed notifications, confirm on their device too.
+      showNotification("Enquiry sent to BICT Computer Education", {
+        body: `Thanks ${name}! We received your ${course} enquiry and will call you on ${phone} shortly.`,
+        tag: "bict-enquiry",
+        url: "/#contact",
+      }).catch(() => undefined);
       setSent(true);
       setForm(initialForm);
     } catch (error) {
@@ -120,6 +128,11 @@ export default function Enquiry(){
                       Call Now
                     </a>
                   </div>
+                  {/* stay in the loop even after leaving the page */}
+                  <NotificationButton
+                    variant="full"
+                    className="mt-4 w-full !py-3 text-center"
+                  />
                 </div>
               ) : (
                 <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">

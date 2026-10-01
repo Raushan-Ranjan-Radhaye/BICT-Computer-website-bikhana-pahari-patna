@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
 import { BRAND } from "@/app/data";
 
 /** Shape of the enquiry payload sent by the client form. */
@@ -8,21 +9,96 @@ export type EnquiryPayload = {
   course: string;
 };
 
-/** Pulls SMTP settings from the environment (`.env.local` / `.env`). */
-function getTransporter() {
-  const user = process.env.GMAIL_USER?.trim();
-  const pass = process.env.GMAIL_APP_PASSWORD?.trim();
 
-  if (!user || !pass) {
+let transporter: Transporter | null = null;
+
+/**
+ * Resolves which mail credentials to use, in priority order:
+ * 1. Any custom relay (Brevo, SES, Mailgun...) via SMTP_* — used whenever
+ *    SMTP_HOST is present.
+ * 2. Gmail preset using a 16-character Google **App Password**.
+ */
+export function mailConfig() {
+  const smtpHost = process.env.SMTP_HOST?.trim();
+  const smtpUser = process.env.SMTP_USER?.trim();
+  const smtpPass = process.env.SMTP_PASS?.trim();
+  const smtpPort = Number(process.env.SMTP_PORT?.trim()) || 587;
+
+  if (smtpHost && smtpUser && smtpPass) {
+    return {
+      provider: "custom" as const,
+      host: smtpHost,
+      port: smtpPort,
+      secure: process.env.SMTP_SECURE === "true" || smtpPort === 465,
+      user: smtpUser,
+      pass: smtpPass,
+    };
+  }
+
+  const gmailUser = process.env.GMAIL_USER?.trim();
+  const gmailPass = process.env.GMAIL_APP_PASSWORD?.trim();
+
+  if (gmailUser && gmailPass) {
+    return {
+      provider: "gmail" as const,
+      host: "",
+      port: 0,
+      secure: false,
+      user: gmailUser,
+      pass: gmailPass,
+    };
+  }
+
+  return null;
+}
+
+function getTransporter(): Transporter {
+  if (transporter) return transporter;
+
+  const config = mailConfig();
+  if (!config) {
     throw new Error(
-      "Email is not configured. Please set GMAIL_USER and GMAIL_APP_PASSWORD in your environment variables.",
+      "Email is not configured. Set SMTP_HOST + SMTP_USER + SMTP_PASS (Brevo or any relay), or GMAIL_USER + GMAIL_APP_PASSWORD.",
     );
   }
 
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: { user, pass },
-  });
+  transporter =
+    config.provider === "custom"
+      ? nodemailer.createTransport({
+          host: config.host,
+          port: config.port,
+          secure: config.secure,
+          auth: { user: config.user, pass: config.pass },
+        })
+      : nodemailer.createTransport({
+          service: "gmail",
+          auth: { user: config.user, pass: config.pass },
+        });
+
+  return transporter;
+}
+
+/** Human-friendly reason for a send failure, safe to log server-side. */
+function describeMailError(error: unknown): string {
+  const code = (error as { code?: string })?.code ?? "";
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (code === "EAUTH" || code === "535" || /Invalid login|authentication|unauthorized/i.test(message)) {
+    return `SMTP rejected the login (${code || "auth error"}). Check the SMTP login/key and that sending is still enabled for this account.`;
+  }
+  if (code === "ECONNECTION" || code === "ETIMEDOUT" || code === "EDNS" || code === "EHOSTUNREACH") {
+    return "Could not reach the mail server (wrong host/port, or the port is blocked by the network).";
+  }
+  if (code === "ECONNRESET" || /socket hang up|Connection closed/i.test(message)) {
+    return "The mail server closed the connection. Please try again.";
+  }
+  if (/not verified|sender|from address|unauthorized sender|550|553|spf/i.test(message)) {
+    return `The mail server rejected the sender address: ${message}. Add/verify the sender in your provider dashboard.`;
+  }
+  if (code === "EMESSAGE") {
+    return `The mail server rejected the message: ${message}`;
+  }
+  return message;
 }
 
 /** Strips any HTML so user input can never be injected into the email markup. */
@@ -81,13 +157,31 @@ function buildHtmlEmail(data: EnquiryPayload) {
 
 /** Sends the enquiry to the institute inbox. */
 export async function sendEnquiryEmail(data: EnquiryPayload) {
-  const from = process.env.GMAIL_USER?.trim() as string;
-  // Enquiries land in the same Gmail inbox by default; override with ENQUIRY_TO_EMAIL.
-  const to = process.env.ENQUIRY_TO_EMAIL?.trim() || from;
+  const config = mailConfig();
+  if (!config) {
+    throw new Error(
+      "Email is not configured. Set SMTP_HOST + SMTP_USER + SMTP_PASS (Brevo or any relay), or GMAIL_USER + GMAIL_APP_PASSWORD.",
+    );
+  }
+
+  /*
+   * From: must be a sender the provider has verified.
+   * MAIL_FROM wins, otherwise fall back to the SMTP login (Brevo accepts this)
+   * and finally to the Gmail account for the Gmail preset.
+   */
+  const fromAddress =
+    process.env.MAIL_FROM?.trim() || config.user;
+  // To: where enquiries are delivered.
+  const to =
+    process.env.ENQUIRY_TO_EMAIL?.trim() ||
+    process.env.GMAIL_USER?.trim() ||
+    fromAddress;
 
   const info = await getTransporter().sendMail({
-    from: `"${BRAND.name} Website" <${from}>`,
+    from: `"${BRAND.name} Website" <${fromAddress}>`,
     to,
+    // Replies land back in the institute inbox.
+    replyTo: process.env.MAIL_REPLY_TO?.trim() || `"${BRAND.name}" <${BRAND.email}>`,
     subject: `New Enquiry - ${data.name} (${data.course})`,
     text: [
       "New enquiry from the BICT Computer Education website.",
@@ -95,9 +189,18 @@ export async function sendEnquiryEmail(data: EnquiryPayload) {
       `Name: ${data.name}`,
       `Phone: ${data.phone}`,
       `Course: ${data.course}`,
+      "",
+      `Sent: ${new Date().toISOString()}`,
     ].join("\n"),
     html: buildHtmlEmail(data),
   });
 
   return { messageId: info.messageId, to };
 }
+
+/** Lightweight connectivity + credential check (used by the health endpoint). */
+export async function verifyMailer() {
+  return getTransporter().verify();
+}
+
+export { describeMailError };

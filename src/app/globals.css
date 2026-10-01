@@ -234,7 +234,9 @@ body {
 .pink-card {
   position: relative;
   isolation: isolate;
-  background: #fff;
+  /* Longhand on purpose: the `background` shorthand would reset
+     `background-image` and kill any `bg-gradient-*` utility overlay. */
+  background-color: #fff;
   border: 1px solid var(--color-brand-100);
   transition:
     transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
@@ -309,12 +311,12 @@ body {
 }
 
 .btn-ghost {
-  background: #fff;
+  background-color: #fff;
   color: var(--color-brand-700);
   border: 1.5px solid var(--color-brand-200);
 }
 .btn-ghost:hover {
-  background: var(--color-brand-50);
+  background-color: var(--color-brand-50);
   border-color: var(--color-brand-400);
   color: var(--color-brand-800);
   transform: translateY(-3px);
