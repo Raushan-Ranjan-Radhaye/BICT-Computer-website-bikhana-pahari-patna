@@ -61,6 +61,7 @@ function readSnapshot(): NotificationSnapshot {
   return cached;
 }
 
+
 /** Notifies every mounted bell that the browser permission may have changed. */
 function emitPermissionChange() {
   cached = readSnapshot();
