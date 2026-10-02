@@ -29,14 +29,6 @@ const COPY: Record<PermissionState, { label: string; tip: string }> = {
   unsupported: { label: "Alerts Unavailable", tip: "Not supported here" },
 };
 
-/* ---------- Permission store (reads browser state without extra renders) ---- */
-
-/**
- * Everything the button needs to know about the browser, in one snapshot.
- * Both values read `window` / `navigator`, so they must never be read while
- * rendering on the server — doing so produces different HTML than the client
- * renders and triggers a hydration error.
- */
 type NotificationSnapshot = {
   permission: PermissionState;
   canRequest: boolean;
